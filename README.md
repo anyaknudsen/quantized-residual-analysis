@@ -1,41 +1,45 @@
-Task: Statistical Distribution Analysis
+# Task: Statistical Distribution Analysis
 
-June 16, 2026
+**June 16, 2026**
 
-Quantized Residual Distribution Analysis
+## Quantized Residual Distribution Analysis
 
-Objective
+## Objective
 
-In our study of low-bit-depth compression (b ∈ {1, 2, 3}), we aim to exploit the temporal correlation of speech.
-Instead of complex predictive models, we examine the behavior of residuals in the quantized domain. Given
-the quantized signal Zn = Q(Xn + Vn) − Vn, we define the first-order quantized residual as:
+In our study of low-bit-depth compression (`b ∈ {1, 2, 3}`), we aim to exploit the temporal correlation of speech.
 
-∆Zn = Zn − Zn−1 (1)
+Instead of complex predictive models, we examine the behavior of residuals in the quantized domain. Given the quantized signal `Z_n = Q(X_n + V_n) − V_n`, we define the first-order quantized residual as:
 
-Your goal is to demonstrate that ∆Zn concentrates significantly more probability mass at zero than the raw
-states Zn, facilitating higher compression efficiency.
+```text
+∆Z_n = Z_n − Z_{n−1}    (1)
+```
 
-Deliverables
+Your goal is to demonstrate that `∆Z_n` concentrates significantly more probability mass at zero than the raw states `Z_n`, facilitating higher compression efficiency.
 
-1. Quantization Loop: Implement the subtractively dithered, uniform mid-riser quantizer as defined in
-our project documentation (b ∈ {1, 2, 3}, α ∈ [0, 1]).
+## Deliverables
 
-2. Data Generation: Process a standard speech dataset to generate the sequences {Zn} and the resulting
-residual sequence {∆Zn}.
+### 1. Quantization Loop
 
-3. Visualization: Plot the empirical Probability Mass Function (PMF) of Zn versus ∆Zn.
+Implement the subtractively dithered, uniform mid-riser quantizer as defined in our project documentation (`b ∈ {1, 2, 3}`, `α ∈ [0, 1]`).
 
-4. Entropy Comparison: Compute and plot the marginal entropy H(Zn) and the conditional entropy
-H(Zn|Zn−1) as a function of the dither parameter α.
+### 2. Data Generation
 
-Conceptual Foundations
+Process a standard speech dataset to generate the sequences `{Z_n}` and the resulting residual sequence `{∆Z_n}`.
 
-Before beginning, please review the following concepts to ensure you have the necessary theoretical background:
+### 3. Visualization
 
-• Markov Sources: Understand why the conditional entropy H(Zn|Zn−1) represents the fundamental
-limit for this encoding scheme.
+Plot the empirical Probability Mass Function (PMF) of `Z_n` versus `∆Z_n`.
 
-• Entropy Coding: Review how Huffman and Arithmetic coding exploit non-uniform, ”peaked” probability distributions to achieve compression.
+### 4. Entropy Comparison
 
-• Differential Encoding: Familiarize yourself with how calculating state-to-state differences reduces
-local signal variance, a core principle in lossless audio/image compression.
+Compute and plot the marginal entropy `H(Z_n)` and the conditional entropy `H(Z_n|Z_{n−1})` as a function of the dither parameter `α`.
+
+## Conceptual Foundations
+
+Before beginning, please review the following concepts to ensure you have the necessary theoretical background:
+
+* **Markov Sources:** Understand why the conditional entropy `H(Z_n|Z_{n−1})` represents the fundamental limit for this encoding scheme.
+
+* **Entropy Coding:** Review how Huffman and Arithmetic coding exploit non-uniform, “peaked” probability distributions to achieve compression.
+
+* **Differential Encoding:** Familiarize yourself with how calculating state-to-state differences reduces local signal variance, a core principle in lossless audio/image compression.
