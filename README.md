@@ -1,45 +1,70 @@
-# Task: Statistical Distribution Analysis
+# Quantized Residual Distribution Analysis
 
-**June 16, 2026**
+Low-bit-depth (b in {1, 2, 3}) speech compression analysis for a subtractively
+dithered uniform mid-riser quantizer. The goal is to demonstrate that the
+first-order quantized residual, dZ_n = Z_n - Z_{n-1}, concentrates far more
+probability mass at zero than the raw quantizer states Z_n, and to quantify the
+resulting temporal redundancy via H(Z_n) and H(Z_n | Z_{n-1}).
 
-## Quantized Residual Distribution Analysis
+Lightweight ASR - WINLAB summer project (dithered quantization for ASR-preserving
+speech codecs).
 
-## Objective
+## Layout
 
-In our study of low-bit-depth compression (`b ∈ {1, 2, 3}`), we aim to exploit the temporal correlation of speech.
-
-Instead of complex predictive models, we examine the behavior of residuals in the quantized domain. Given the quantized signal `Z_n = Q(X_n + V_n) − V_n`, we define the first-order quantized residual as:
-
-```text
-∆Z_n = Z_n − Z_{n−1}    (1)
+```
+src/
+  dither.py       subtractive dither model  f_V(v) = a*Pi + (1-a)*delta
+  quantizer.py    mid-riser quantizer, quantization loop, level verification
+  entropy.py      marginal + conditional entropy, first-order residuals
+  vad.py          frame-energy VAD for silence handling
+  data.py         LibriSpeech dev-clean extraction / load / peak-normalize
+experiments/
+  pmf_comparison.py   Deliverable 3: PMF of Z_n vs dZ_n, b in {1,2,3}
+  entropy_sweep.py    Deliverable 4: H(Z), H(Z|Z-1) vs alpha, clip fractions
+tests/
+  test_sanity.py      IID / constant / AR(1) / quantizer-level checks
+notebooks/
+  analysis.ipynb      narrative driver importing from src/
 ```
 
-Your goal is to demonstrate that `∆Z_n` concentrates significantly more probability mass at zero than the raw states `Z_n`, facilitating higher compression efficiency.
+## Setup
 
-## Deliverables
+```bash
+pip install -r requirements.txt
+```
 
-### 1. Quantization Loop
+Download `dev-clean.tar.gz` from <https://www.openslr.org/12> and place it in
+`data/`. It is gitignored (~337 MB).
 
-Implement the subtractively dithered, uniform mid-riser quantizer as defined in our project documentation (`b ∈ {1, 2, 3}`, `α ∈ [0, 1]`).
+## Run
 
-### 2. Data Generation
+```bash
+python -m experiments.pmf_comparison   # Deliverable 3 -> results/figures/
+python -m experiments.entropy_sweep    # Deliverable 4 -> results/figures/
+pytest tests/                          # sanity checks
+```
 
-Process a standard speech dataset to generate the sequences `{Z_n}` and the resulting residual sequence `{∆Z_n}`.
+## Method notes
 
-### 3. Visualization
+- **Z_n is the discrete quantizer output** Q(X+V) (bin index k, equivalently
+  level C_k), following the project documentation's compression section. The
+  subtractive reconstruction Q(X+V)-V is computed but not entropy-coded:
+  subtracting the continuous dither would destroy the finite alphabet.
+- **Reconstruction levels** C_k = -1 + (k + 0.5) * Delta, verified in
+  `tests/test_sanity.py` against the documentation (b=1: +/-1/2; b=2: +/-1/4,
+  +/-3/4; b=3: +/-1/8,...,+/-7/8).
+- **Conditional entropy** is estimated over ordered pairs via integer
+  pair-encoding, not tuple-`np.unique` (which silently miscounts joint symbols).
+  Sanity check: IID input gives H(Z_n | Z_{n-1}) ~ H(Z_n); constant input gives 0.
+- **Silence** is handled by reporting both all-samples and active-speech
+  (25 ms frame-energy VAD) conditions; residual pairs are never formed across
+  file or segment boundaries.
+- **No-overload accounting**: the clipped-sample fraction is reported per
+  (b, alpha) rather than silently saturating overloads.
 
-Plot the empirical Probability Mass Function (PMF) of `Z_n` versus `∆Z_n`.
+## The alpha tradeoff
 
-### 4. Entropy Comparison
-
-Compute and plot the marginal entropy `H(Z_n)` and the conditional entropy `H(Z_n|Z_{n−1})` as a function of the dither parameter `α`.
-
-## Conceptual Foundations
-
-Before beginning, please review the following concepts to ensure you have the necessary theoretical background:
-
-* **Markov Sources:** Understand why the conditional entropy `H(Z_n|Z_{n−1})` represents the fundamental limit for this encoding scheme.
-
-* **Entropy Coding:** Review how Huffman and Arithmetic coding exploit non-uniform, “peaked” probability distributions to achieve compression.
-
-* **Differential Encoding:** Familiarize yourself with how calculating state-to-state differences reduces local signal variance, a core principle in lossless audio/image compression.
+Dither whitens quantization error and reduces harmonic distortion (MSE / MACE /
+MSCO all improve as alpha increases), but it decorrelates the quantized output,
+so H(Z_n | Z_{n-1}) increases with alpha. Compression efficiency favors small
+alpha; ASR robustness / distortion whitening favors larger alpha. 
